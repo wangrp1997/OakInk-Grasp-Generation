@@ -23,6 +23,10 @@ from lib.utils.logger import logger
 from lib.viztools.utils import ColorsMap as CMap
 from lib.viztools.viz_o3d_utils import VizContext
 
+from scripts.simple_retarget import SimpleRetargeter
+from dex_retargeting.constants import HandType
+
+
 GrabNetConfig = dict(
     DATA_PRESET=dict(
         CENTER_IDX=9,
@@ -96,6 +100,13 @@ def grasp_new_obj(arg: Namespace, exp_time):
     model = builder.build_model(cfg.MODEL, data_preset=cfg.DATA_PRESET)
     transform = builder.build_transform(cfg.TRANSFORM, data_preset=cfg.DATA_PRESET)
 
+    # 初始化重映射器
+    retargeter = SimpleRetargeter(
+        robot_name=arg.robots,
+        hand_type=HandType[arg.hand_type],
+        fixed_joints_num=arg.fixed_joints_num
+    )
+
     model = DP(model).to(device=rank)
     transform = DP(transform).to(device=rank)
     model.eval()
@@ -126,6 +137,18 @@ def grasp_new_obj(arg: Namespace, exp_time):
         show_next = False
         obj_data = transform(obj_data)
         prd, _ = model(inp=obj_data, step_idx=0, mode="test")
+        
+        # 获取 MANO 手部关键点和姿态
+        mano_joints = prd["Refine.joints_rhand"][0].detach().cpu().numpy()  # (21, 3)
+        mano_pose = torch.cat([
+            prd["Refine.global_orient"][0],
+            prd["Refine.hand_pose"][0]
+        ]).detach().cpu().numpy()  # (48,)
+        
+        # 进行重映射
+        robot_qpos, retarget_info = retargeter.retarget(mano_joints, mano_pose)
+        print(f"机器人关节角度: {robot_qpos}")
+        print(f"重映射信息: {retarget_info}")
 
         hand_verts = prd["Refine.hand_verts"][0].detach().cpu().numpy()
         res_hand_verts.append(hand_verts)
@@ -168,6 +191,10 @@ if __name__ == '__main__':
                         default=False,
                         help='rescale the object to fit in radius=0.1m sphere')
     parser.add_argument("--save", action="store_true", default=False, help='save the grasps to file')
+    parser.add_argument("--robots", type=str, default="ALLEGRO", help='robot hand name for retargeting (e.g. ALLEGRO, SHADOW, etc.)')
+    parser.add_argument("--hand_type", type=str, default="left", help='robot hand type for retargeting (e.g. left, right, etc.)')
+    parser.add_argument("--fixed_joints_num", type=int, default=2, help='fixed joints number for retargeting')
+
     arg_extra, _ = parser.parse_known_args()
     arg = argparse.Namespace(**vars(arg), **vars(arg_extra))
 

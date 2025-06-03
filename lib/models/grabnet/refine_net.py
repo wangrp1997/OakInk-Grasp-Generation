@@ -180,7 +180,9 @@ class RefineNet(ModelABC):
         mano_pose = torch.cat([hand_param["global_orient"], hand_param["hand_pose"]], dim=1)  # (B, 48)
         mano_output: MANOOutput = self.mano_layer(mano_pose, hand_shape)
         verts_rhand = mano_output.verts + hand_param["transl"].unsqueeze(1)
+        joints_rhand = mano_output.joints + hand_param["transl"].unsqueeze(1)
         res["hand_verts"] = verts_rhand  # for visualize
+        res["joints_rhand"] = joints_rhand  # for retargeting
 
         res = {f"{self.stage}.{k}": v for k, v in res.items()}
         return res, {}

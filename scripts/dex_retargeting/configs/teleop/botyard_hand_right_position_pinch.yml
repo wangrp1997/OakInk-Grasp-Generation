@@ -1,0 +1,46 @@
+retargeting:
+  type: position_pinch
+  urdf_path: botyard_hand/botyard_hand_right.urdf
+
+  # 关节配置
+  target_joint_names: [
+    # 前臂关节
+    # "FAJ1", "FAJ3",
+    # 食指关节
+    "FFJ1", "FFJ2", "FFJ3", "FFJ4",
+    # 小指关节
+    "LFJ1", "LFJ2", "LFJ3", "LFJ4",
+    # 中指关节
+    "MFJ1", "MFJ2", "MFJ3", "MFJ4",
+    # 无名指关节
+    "RFJ1", "RFJ2", "RFJ3", "RFJ4",
+    # 拇指关节
+    "THJ1", "THJ2", "THJ3", "THJ4"
+  ]
+
+  # 用于位置优化的连杆
+  target_link_names: [ "thtip", "fftip", "mftip", "rftip", "lftip",
+                       "thmiddle", "ffmiddle", "mfmiddle", "rfmiddle", "lfmiddle" ]
+
+  # 用于位置优化的人类关节索引
+  target_link_human_indices: [ 4, 8, 12, 16, 20, 2, 6, 10, 14, 18 ]
+
+  # 用于 dexpilot 优化的连杆
+  wrist_link_name: "thbase"  # 右手使用 thbase
+  finger_tip_link_names: [ "thtip", "fftip", "mftip", "rftip", "lftip" ]
+
+  # 优化参数
+  scaling_factor: 1.2  # 使用与 dexpilot 相同的缩放因子
+  huber_delta_pos: 0.02  # 位置损失的 huber delta
+  huber_delta_vec: 0.03  # 向量损失的 huber delta
+  normal_delta: 4e-3
+  project_dist: 0.03  # dexpilot 投影距离
+  escape_dist: 0.05   # dexpilot 逃逸距离
+
+  # 是否添加自由关节
+  add_dummy_free_joint: False  # 与 dexpilot 保持一致
+
+  # 低通滤波参数
+  # 较小的 alpha 意味着更强的滤波，即更平滑但延迟更大
+  # 1 表示无滤波，0 表示不移动
+  low_pass_alpha: 0.2  # 使用与 dexpilot 相同的滤波参数 

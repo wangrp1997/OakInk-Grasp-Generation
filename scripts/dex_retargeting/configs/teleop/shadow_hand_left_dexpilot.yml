@@ -1,0 +1,25 @@
+retargeting:
+  type: DexPilot
+  urdf_path: shadow_hand/shadow_hand_left.urdf
+
+  target_joint_names: [
+    # 前臂关节
+    # "FAJ1", "FAJ3",
+    # 食指关节
+    "FFJ1", "FFJ2", "FFJ3", "FFJ4",
+    # 小指关节
+    "LFJ1", "LFJ2", "LFJ3", "LFJ4",
+    # 中指关节
+    "MFJ1", "MFJ2", "MFJ3", "MFJ4",
+    # 无名指关节
+    "RFJ1", "RFJ2", "RFJ3", "RFJ4",
+    # 拇指关节
+    "THJ1", "THJ2", "THJ3", "THJ4", "THJ5"
+  ]
+  # Target refers to the retargeting target, which is the robot hand
+  wrist_link_name: "ee_link"
+  finger_tip_link_names: [ "thtip", "fftip", "mftip", "rftip", "lftip" ]
+  scaling_factor: 1.2
+
+  # A smaller alpha means stronger filtering, i.e. more smooth but also larger latency
+  low_pass_alpha: 0.2

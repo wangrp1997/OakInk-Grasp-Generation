@@ -1,0 +1,39 @@
+retargeting:
+  type: hybrid  # 使用新的混合优化器
+  urdf_path: botyard_hand/botyard_hand_left.urdf
+
+  # 关节配置（与两个方法相同）
+  target_joint_names: [
+    # 前臂关节
+    # "FAJ1", "FAJ3",
+    # 食指关节
+    "FFJ1", "FFJ2", "FFJ3", "FFJ4",
+    # 小指关节
+    "LFJ1", "LFJ2", "LFJ3", "LFJ4",
+    # 中指关节
+    "MFJ1", "MFJ2", "MFJ3", "MFJ4",
+    # 无名指关节
+    "RFJ1", "RFJ2", "RFJ3", "RFJ4",
+    # 拇指关节
+    "THJ1", "THJ2", "THJ3", "THJ4"
+  ]
+
+  # Position 方法需要的配置
+  target_link_names: [ 
+    "thtip", "fftip", "mftip", "rftip", "lftip",
+    "thmiddle", "ffmiddle", "mfmiddle", "rfmiddle", "lfmiddle" 
+  ]
+  target_link_human_indices: [ 4, 8, 12, 16, 20, 2, 6, 10, 14, 18 ]
+
+  # DexPilot 方法需要的配置
+  wrist_link_name: "pmbase"
+  finger_tip_link_names: [ "thtip", "fftip", "mftip", "rftip", "lftip" ]
+  scaling_factor: 1.3
+
+  # 混合优化器特定参数
+  position_weight: 1   # 位置损失权重
+  vector_weight: 0      # 向量损失权重
+
+  # 通用参数
+  add_dummy_free_joint: False
+  low_pass_alpha: 0.2     # 使用 DexPilot 的滤波参数，因为更平滑 

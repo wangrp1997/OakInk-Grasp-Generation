@@ -87,6 +87,8 @@ If you also want to [evaluate grasp quality](#evaluation), there are several ext
 Using our pre-trained GrabNet model to generate multiple grasps on your own object.
 ```bash
 python scripts/grasp_new_obj.py --obj_path $OBJ_PATH --n_grasps 10 
+加入了dex_retageting模块
+python scripts/grasp_new_obj.py --obj_path ./assets/waterbottle.ply --n_grasps 10 --robots botyard --hand_type left --fixed_joints_num 2
 ```
 options for `grasp_new_obj.py`:
 * `--obj_path`: path to the `.obj` or `.ply` file of the object to be grasped.
