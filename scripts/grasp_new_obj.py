@@ -144,7 +144,8 @@ def grasp_new_obj(arg: Namespace, exp_time):
             prd["Refine.global_orient"][0],
             prd["Refine.hand_pose"][0]
         ]).detach().cpu().numpy()  # (48,)
-        
+        mano_transl = prd["Refine.transl"][0].detach().cpu().numpy()
+
         # 进行重映射
         robot_qpos, retarget_info = retargeter.retarget(mano_joints, mano_pose)
         print(f"机器人关节角度: {robot_qpos}")

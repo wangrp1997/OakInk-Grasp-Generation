@@ -89,6 +89,8 @@ Using our pre-trained GrabNet model to generate multiple grasps on your own obje
 python scripts/grasp_new_obj.py --obj_path $OBJ_PATH --n_grasps 10 
 加入了dex_retageting模块
 python scripts/grasp_new_obj.py --obj_path ./assets/waterbottle.ply --n_grasps 10 --robots botyard --hand_type left --fixed_joints_num 2
+改为sapien渲染：
+python scripts/grasp_new_obj_sapien.py     --obj_path ./assets/waterbottle.ply     --n_grasps 10     --hand_type left     --robots botyard     --fixed_joints_num 3
 ```
 options for `grasp_new_obj.py`:
 * `--obj_path`: path to the `.obj` or `.ply` file of the object to be grasped.

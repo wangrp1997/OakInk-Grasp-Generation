@@ -26,3 +26,4 @@ checkpoints/*
 !checkpoints/.gitkeep
 
 ddp_python
+user/

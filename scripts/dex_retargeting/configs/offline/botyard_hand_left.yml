@@ -8,7 +8,7 @@ retargeting:
     # 食指关节
     "FFJ1", "FFJ2", "FFJ3", "FFJ4",
     # 小指关节
-    "LFJ1", "LFJ2", "LFJ3", "LFJ4", "LFJ5",
+    "LFJ1", "LFJ2", "LFJ3", "LFJ4",
     # 中指关节
     "MFJ1", "MFJ2", "MFJ3", "MFJ4",
     # 无名指关节
