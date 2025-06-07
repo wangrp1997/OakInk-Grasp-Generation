@@ -176,7 +176,7 @@ class HandDatasetSAPIENViewer:
         builder.add_visual_from_file(ycb_mesh_file)
         actor = builder.build_static(name=YCB_CLASSES[ycb_id])
         self.objects.append(actor)
-
+    
     def _compute_hand_geometry(self, hand_pose_frame, use_camera_frame=False):
         # pose parameters all zero, no hand is detected
         if np.abs(hand_pose_frame).sum() < 1e-5:

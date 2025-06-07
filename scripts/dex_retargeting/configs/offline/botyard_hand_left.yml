@@ -17,11 +17,11 @@ retargeting:
     "THJ1", "THJ2", "THJ3", "THJ4"
   ]
 
-  target_link_names: [ "thtip", "fftip", "mftip", "rftip", "lftip",
+  target_link_names: [ "pmbase","thtip", "fftip", "mftip", "rftip", "lftip",
                        "thmiddle", "ffmiddle", "mfmiddle", "rfmiddle", "lfmiddle",
                        "thproximal", "ffproximal", "mfproximal", "rfproximal", "lfproximal" ]
 
-  target_link_human_indices: [ 4, 8, 12, 16, 20, 2, 6, 10, 14, 18, 1,5,9,13,17]
+  target_link_human_indices: [0, 4, 8, 12, 16, 20, 2, 6, 10, 14, 18, 1,5,9,13,17]
   add_dummy_free_joint: True
 
   # A smaller alpha means stronger filtering, i.e. more smooth but also larger latency

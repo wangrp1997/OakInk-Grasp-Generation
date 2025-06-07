@@ -2,11 +2,26 @@ retargeting:
   type: position
   urdf_path: shadow_hand/shadow_hand_right.urdf
 
-  target_joint_names: null
-  target_link_names: [ "thtip", "fftip", "mftip", "rftip", "lftip",
-                       "thmiddle", "ffmiddle", "mfmiddle", "rfmiddle", "lfmiddle" ]
+  target_joint_names: [
+    # 前臂关节
+    # "FAJ1", "FAJ3",
+    # 食指关节
+    "FFJ1", "FFJ2", "FFJ3", "FFJ4",
+    # 小指关节
+    "LFJ1", "LFJ2", "LFJ3", "LFJ4",
+    # 中指关节
+    "MFJ1", "MFJ2", "MFJ3", "MFJ4",
+    # 无名指关节
+    "RFJ1", "RFJ2", "RFJ3", "RFJ4",
+    # 拇指关节
+    "THJ1", "THJ2", "THJ3", "THJ4",
+    "THJ5"
+  ]
+  target_link_names: [ "ee_link", "thtip", "fftip", "mftip", "rftip", "lftip",
+                       "thmiddle", "ffmiddle", "mfmiddle", "rfmiddle", "lfmiddle",
+                       "thproximal", "ffproximal", "mfproximal", "rfproximal", "lfproximal" ]
 
-  target_link_human_indices: [ 4, 8, 12, 16, 20, 2, 6, 10, 14, 18 ]
+  target_link_human_indices: [0, 4, 8, 12, 16, 20, 2, 6, 10, 14, 18, 1,5,9,13,17]
   add_dummy_free_joint: True
 
   # A smaller alpha means stronger filtering, i.e. more smooth but also larger latency

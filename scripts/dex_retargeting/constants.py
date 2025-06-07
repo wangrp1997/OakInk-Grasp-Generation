@@ -4,22 +4,35 @@ from typing import Optional
 
 import numpy as np
 
+# OPERATOR2MANO_RIGHT = np.array(
+#     [
+#         [0, 0, -1],
+#         [-1, 0, 0],
+#         [0, 1, 0],
+#     ]
+# 
 OPERATOR2MANO_RIGHT = np.array(
     [
-        [0, 0, -1],
+        [0, -1, 0],
+        [0, 0, 1],
         [-1, 0, 0],
-        [0, 1, 0],
     ]
-)
+) # shadow
 
+# OPERATOR2MANO_LEFT = np.array(
+#     [
+#         [0, 0, -1],
+#         [1, 0, 0],
+#         [0, -1, 0],
+#     ]
+# )
 OPERATOR2MANO_LEFT = np.array(
     [
         [0, 0, -1],
-        [1, 0, 0],
         [0, -1, 0],
+        [-1, 0, 0],
     ]
-)
-
+) # botyard
 
 class RobotName(enum.Enum):
     allegro = enum.auto()

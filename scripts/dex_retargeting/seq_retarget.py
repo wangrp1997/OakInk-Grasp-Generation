@@ -74,6 +74,7 @@ class SeqRetargeting:
         target_wrist_pose[:3, :3] = (
             rotations.matrix_from_quaternion(wrist_quat) @ operator2mano.T
         )
+        # 设置平移部分
         target_wrist_pose[:3, 3] = wrist_pos
 
         name_list = [
@@ -91,7 +92,10 @@ class SeqRetargeting:
         new_qpos = old_qpos.copy()
         for num, joint_name in enumerate(self.optimizer.target_joint_names):
             if joint_name in name_list:
-                new_qpos[num] = 0
+                if joint_name == "dummy_z_translation_joint":
+                    new_qpos[num] = 0.26  # 设置 z 轴偏移值
+                else:
+                    new_qpos[num] = 0
 
         robot.compute_forward_kinematics(new_qpos)
         root2wrist = robot.get_link_pose_inv(wrist_link_id)

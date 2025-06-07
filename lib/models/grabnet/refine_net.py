@@ -183,6 +183,7 @@ class RefineNet(ModelABC):
         joints_rhand = mano_output.joints + hand_param["transl"].unsqueeze(1)
         res["hand_verts"] = verts_rhand  # for visualize
         res["joints_rhand"] = joints_rhand  # for retargeting
+        res["hand_shape"] = hand_shape
 
         res = {f"{self.stage}.{k}": v for k, v in res.items()}
         return res, {}

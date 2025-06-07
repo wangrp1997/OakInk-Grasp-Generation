@@ -18,6 +18,7 @@ from pytorch3d.ops import sample_points_from_meshes
 from pytorch3d.structures import Meshes
 from torch.nn.parallel import DataParallel as DP
 from trimesh import Trimesh
+from scipy.spatial.transform import Rotation
 
 # 先导入模型和转换器，确保它们被注册
 from lib.models import *
@@ -34,7 +35,8 @@ from dex_retargeting.constants import (
     HandType, 
     RobotName, 
     RetargetingType,
-    get_default_config_path
+    get_default_config_path,
+    OPERATOR2MANO
 )
 from dex_retargeting.retargeting_config import RetargetingConfig
 from dex_retargeting import yourdfpy as urdf
@@ -147,35 +149,86 @@ def grasp_new_obj(arg: Namespace, exp_time):
     scene.add_directional_light([0, 0, -1], [1.8, 1.6, 1.6], shadow=False)
     scene.set_ambient_light([0.2, 0.2, 0.2])
 
+    visual_material = sapien.render.RenderMaterial()
+    visual_material.set_base_color(np.array([0.5, 0.5, 0.5, 1]))
+    visual_material.set_roughness(0.7)
+    visual_material.set_metallic(1)
+    visual_material.set_specular(0.04)
+    scene.add_ground(-1, render_material=visual_material)
+    # Create table
+    # white_diffuse = sapien.render.RenderMaterial()
+    # white_diffuse.set_base_color(np.array([0.8, 0.8, 0.8, 1]))
+    # white_diffuse.set_roughness(0.9)
+    # scene_builder = scene.create_actor_builder()
+    # scene_builder.add_box_collision(
+    #     sapien.Pose([0, 0, -0.02]), half_size=np.array([0.5, 2.0, 0.02])
+    # )
+    # scene_builder.add_box_visual(
+    #     sapien.Pose([0, 0, -0.02]),
+    #     half_size=np.array([0.5, 2.0, 0.02]),
+    #     material=white_diffuse,
+    # )
+    # scene_builder.add_box_visual(
+    #     sapien.Pose([0.4, 1.9, -0.51]),
+    #     half_size=np.array([0.015, 0.015, 0.49]),
+    #     material=white_diffuse,
+    # )
+    # scene_builder.add_box_visual(
+    #     sapien.Pose([-0.4, 1.9, -0.51]),
+    #     half_size=np.array([0.015, 0.015, 0.49]),
+    #     material=white_diffuse,
+    # )
+    # scene_builder.add_box_visual(
+    #     sapien.Pose([0.4, -1.9, -0.51]),
+    #     half_size=np.array([0.015, 0.015, 0.49]),
+    #     material=white_diffuse,
+    # )
+    # scene_builder.add_box_visual(
+    #     sapien.Pose([-0.4, -1.9, -0.51]),
+    #     half_size=np.array([0.015, 0.015, 0.49]),
+    #     material=white_diffuse,
+    # )
+    # table = scene_builder.build_static(name="table")
+    # table.set_pose(sapien.Pose([0.0, 0.0, -0.07]))
     # 添加相机
-    camera = scene.add_camera(
-        name='camera',
-        width=1920,
-        height=1080,
-        fovy=np.deg2rad(35),
-        near=0.1,
-        far=100,
-    )
-    camera.set_local_pose(sapien.Pose([1.5, 0, 1.0], [0, 0.389418, 0, -0.921061]))
+    # camera = scene.add_camera(
+    #     name='camera',
+    #     width=1920,
+    #     height=1080,
+    #     fovy=np.deg2rad(35),
+    #     near=0.1,
+    #     far=100,
+    # )
+    # camera.set_local_pose(sapien.Pose([1.5, 0, 1.0], [0, 0.389418, 0, -0.921061]))
 
-    # 加载机器人手
+    # 加载 URDF
+    loader = scene.create_urdf_loader()
+    loader.fix_root_link = True
+    loader.load_multiple_collisions_from_file = True
+    # 加载配置
     config_path = get_default_config_path(
         RobotName[arg.robots], 
         RetargetingType.position, 
         HandType[arg.hand_type]
     )
-    config = RetargetingConfig.load_from_file(config_path, override={'add_dummy_free_joint': True})
+    # Add 6-DoF dummy joint at the root of each robot to make them move freely in the space
+    override = dict(add_dummy_free_joint=True)
+    config = RetargetingConfig.load_from_file(config_path)
     retargeting = config.build()
-    
-    # 加载 URDF
-    loader = scene.create_urdf_loader()
-    loader.fix_root_link = True
+
+    # Build robot
     urdf_path = Path(config.urdf_path)
     robot_urdf = urdf.URDF.load(str(urdf_path), add_dummy_free_joints=True, build_scene_graph=False)
     temp_dir = tempfile.mkdtemp(prefix='dex_retargeting-')
     temp_path = f'{temp_dir}/{urdf_path.name}'
     robot_urdf.write_xml_file(temp_path)
     robot = loader.load(temp_path)
+    
+    # create robot joint retargeting
+    sapien_joint_names = [joint.name for joint in robot.get_active_joints()]
+    retarget2sapien = np.array(
+        [retargeting.joint_names.index(n) for n in sapien_joint_names]
+    ).astype(int)
 
     # 获取机器人关节限制
     robot_joint_limits = []
@@ -210,7 +263,7 @@ def grasp_new_obj(arg: Namespace, exp_time):
     
     # 设置物体材质
     obj_material = sapien.render.RenderMaterial()
-    obj_material.set_base_color(np.array([0.2, 0.8, 0.2, 1]))  # 绿色
+    obj_material.set_base_color(np.array([0.2, 0.6, 0.2, 1]))  # 绿色
     obj_material.set_roughness(0.7)
     obj_material.set_metallic(0.0)
     obj_material.set_specular(0.04)
@@ -273,52 +326,102 @@ def grasp_new_obj(arg: Namespace, exp_time):
                 prd['Refine.global_orient'][0],
                 prd['Refine.hand_pose'][0]
             ]).detach().cpu().numpy()  # (48,)
+            print(f"\nMANO global_orient: {prd['Refine.global_orient'][0].detach().cpu().numpy()}")
             mano_transl = prd['Refine.transl'][0].detach().cpu().numpy()  # (3,)
             hand_verts = prd['Refine.hand_verts'][0].detach().cpu().numpy()
 
             # 直接用hand_verts渲染
             update_mano_hand(hand_verts, i)
-
-            # wrist_quat = Rotation.from_rotvec(mano_pose[:3]).as_quat()
+            
+            # 获取 MANO 手的四元数（[w, x, y, z] 顺序）
             wrist_quat = rotations.quaternion_from_compact_axis_angle(
                 mano_pose[0:3])
             
-            # 先进行 warm_start 初始化机器人手的位姿
+            print("\nMANO手理论位姿:")
+            print(f"MANO位置 (x, y, z): {mano_transl}")
+            print(f"MANO旋转 (w, x, y, z): {wrist_quat}")
+        
+            
+            # 先进行 warm_start 初始化机器人手的全局位姿
             retargeting.warm_start(
-                mano_transl,  # 使用 MANO 手的关节位置
+                mano_joints[0,:],  # 使用 MANO 手的全局位置
                 wrist_quat,         # 使用 MANO 手的全局旋转
                 hand_type=HandType[arg.hand_type],
                 is_mano_convention=True
             )
             
+            # # 获取warm_start后的关节角度
+            warm_start_dummy_qpos = retargeting.last_qpos[:6]  # 前6个是dummy关节
+
+
+            
+            print("\nwarm_start后的机器人全局位置关节角度:")
+            for i in range(6):
+                print(f"{retargeting.joint_names[i]}: {warm_start_dummy_qpos[i]:.6f}")
+
             # 然后进行重映射
             indices = retargeting.optimizer.target_link_human_indices
             ref_value = mano_joints[indices, :]
             fixed_qpos = np.zeros(arg.fixed_joints_num)
             
-            # 获取关节角度并设置
-            qpos = retargeting.retarget(ref_value, fixed_qpos)
-            qpos = np.clip(qpos, robot_joint_limits[:, 0], robot_joint_limits[:, 1])
+            # 获取关节角度
+            qpos = retargeting.retarget(ref_value, fixed_qpos)[retarget2sapien]
+            print("规划的dummy:",qpos[:6])
+            # 设置所有关节角度（包括dummy关节）
+            qpos[:6] = warm_start_dummy_qpos[:6]
             robot.set_qpos(qpos)
-            
             # 设置机器人的全局位姿
-            robot.set_pose(sapien.Pose(mano_transl, wrist_quat))
+            # robot_pose = sapien.Pose(
+            #     p=mano_joints[0,0:3],  # 使用 MANO 手的全局位置
+            #     q=warm_start_dummy_qpos[]   # 使用转换后的四元数
+            # )
+            # robot.set_pose(robot_pose)
+            
+            # 打印通过 retarget2sapien 映射后的实际关节角度
+            print('\n映射后的实际关节角度:')
+            actual_qpos = robot.get_qpos()
+            for i, idx in enumerate(retarget2sapien):
+                joint_name = retargeting.joint_names[idx]
+                print(f'{joint_name}: {actual_qpos[i]:.6f}')
 
-            scene.step()
-            scene.update_render()
-            viewer.render()
+            # 打印控制全局位置的6个关节角度
+            # print("\n机器人全局位置关节角度:")
+            # for i in range(6):
+            #     print(f"{retargeting.joint_names[i]}: {qpos[i]:.6f}")
 
-            space_pressed = False
-            while not space_pressed:
-                viewer.render()
-                if viewer.window.key_down('escape'):
-                    viewer.close()
+            # 设置机器人的全局位姿
+            # 注意：这里我们使用 MANO 手 actor 的实际位置，而不是理论位置
+            # if mano_actor is not None:
+            #     robot.set_pose(mano_actor_pose)
+            # else:
+            #     robot.set_pose(sapien.Pose(mano_transl, wrist_quat))
+            # robot.set_pose(sapien.Pose(qpos[:3], wrist_quat))
+
+            try:
+                scene.step()
+                scene.update_render()
+                if viewer.window is None:  # 检查查看器是否已关闭
                     return
-                elif viewer.window.key_down('space'):
-                    space_pressed = True
-                    break
-            while viewer.window.key_down('space'):
                 viewer.render()
+
+                space_pressed = False
+                while not space_pressed:
+                    if viewer.window is None:  # 检查查看器是否已关闭
+                        return
+                    viewer.render()
+                    if viewer.window.key_down('escape'):
+                        viewer.close()
+                        return
+                    elif viewer.window.key_down('space'):
+                        space_pressed = True
+                        break
+                while viewer.window is not None and viewer.window.key_down('space'):
+                    viewer.render()
+            except Exception as e:
+                print(f"渲染过程中发生错误: {e}")
+                if viewer.window is not None:
+                    viewer.close()
+                return
 
     finally:
         # 清理 MANO 手的 actor 和临时文件
@@ -326,8 +429,12 @@ def grasp_new_obj(arg: Namespace, exp_time):
             scene.remove_actor(mano_actor)
         import shutil
         shutil.rmtree(temp_dir)
-
-    viewer.close()
+        
+        # 确保在函数结束时正确清理资源
+        if 'viewer' in locals() and viewer is not None:
+            viewer.close()
+        if 'scene' in locals() and scene is not None:
+            scene = None
 
     if arg.save:
         ts = time.strftime("%Y_%m%d_%H%M_%S", time.localtime(exp_time))
