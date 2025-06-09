@@ -93,7 +93,7 @@ class SeqRetargeting:
         for num, joint_name in enumerate(self.optimizer.target_joint_names):
             if joint_name in name_list:
                 if joint_name == "dummy_z_translation_joint":
-                    new_qpos[num] = 0.26  # 设置 z 轴偏移值
+                    new_qpos[num] = 0.27  # 设置 z 轴偏移值
                 else:
                     new_qpos[num] = 0
 
